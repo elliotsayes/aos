@@ -51,7 +51,7 @@ return s
 `
   }
   const result = await handle(null, msg, env)
-  console.log(result)
-  // assert.equal(result.Output?.data.output, "Hello World")
+  console.log(result.Output?.data.output)
+  assert.equal(result.Output?.data.output, "1 + 2 = 3.0\n2 + 4 = 6.0\n3 + 6 = 9.0\n4 + 8 = 12.0\n5 + 10 = 15.0\n")
   assert.ok(true)
 })
