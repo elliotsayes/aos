@@ -23,9 +23,32 @@ test('print hello world', async () => {
     Id: "1234xyxfoo",
     Module: "WOOPAWOOPA",
     Tags: [
-      { name: 'Action', value: 'Eval' }
+      { name: 'Action', value: 'Run' }
     ],
-    Data: 'require("lsqlite3")'
+    Data: `
+sqlite3 = require("lsqlite3")
+
+local db = sqlite3.open_memory()
+
+db:exec "CREATE TABLE test (col1, col2)"
+db:exec "INSERT INTO test VALUES (1, 2)"
+db:exec "INSERT INTO test VALUES (2, 4)"
+db:exec "INSERT INTO test VALUES (3, 6)"
+db:exec "INSERT INTO test VALUES (4, 8)"
+db:exec "INSERT INTO test VALUES (5, 10)"
+
+db:create_function("my_sum", 2, function(ctx, a, b)
+  ctx:result_number( a + b )
+end)
+
+local s = ""
+
+for col1, col2, sum in db:urows("SELECT *, my_sum(col1, col2) FROM test") do
+  s = s .. col1 .. " + " .. col2 .. " = " .. sum .. "\\n"
+end
+
+return s
+`
   }
   const result = await handle(null, msg, env)
   console.log(result)

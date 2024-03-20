@@ -24,11 +24,11 @@ local maxInboxCount = 10000
 local function insertInbox(msg)
   table.insert(Inbox, msg)
   if #Inbox > maxInboxCount then
-    local overflow = #Inbox - maxInboxCount 
-    for i = 1,overflow do
+    local overflow = #Inbox - maxInboxCount
+    for i = 1, overflow do
       table.remove(Inbox, 1)
     end
-  end 
+  end
 end
 
 local function findObject(array, key, value)
@@ -58,11 +58,11 @@ function print(a)
   if type(a) == "table" then
     a = stringify.format(a)
   end
-  
-  pcall(function () 
+
+  pcall(function()
     local data = a
     if _ao.outbox.Output.data then
-      data =  _ao.outbox.Output.data .. "\n" .. a
+      data = _ao.outbox.Output.data .. "\n" .. a
     end
     _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
   end)
@@ -90,8 +90,8 @@ Seeded = Seeded or false
 local function stringToSeed(s)
   local seed = 0
   for i = 1, #s do
-      local char = string.byte(s, i)
-      seed = seed + char
+    local char = string.byte(s, i)
+    seed = seed + char
   end
   return seed
 end
@@ -100,8 +100,8 @@ local function initializeState(msg, env)
   if not Seeded then
     --math.randomseed(1234)
     chance.seed(tonumber(msg['Block-Height'] .. stringToSeed(msg.Owner .. msg.Module .. msg.Id)))
-    math.random = function (...)
-      local args = {...}
+    math.random = function(...)
+      local args = { ... }
       local n = #args
       if n == 0 then
         return chance.random()
@@ -131,7 +131,6 @@ local function initializeState(msg, env)
       Name = 'aos'
     end
   end
-
 end
 
 function Version()
@@ -152,32 +151,38 @@ function process.handle(msg, ao)
   -- clear Outbox
   ao.clearOutbox()
 
-  Handlers.add("_eval", 
-    function (msg)
+  Handlers.add("_eval",
+    function(msg)
       return msg.Action == "Eval" and Owner == msg.Owner
     end,
     require('.eval')(ao)
   )
-  Handlers.append("_default", function () return true end, require('.default')(insertInbox))
+  Handlers.add("_run",
+    function(msg)
+      return msg.Action == "Run" and Owner == msg.Owner
+    end,
+    require('.run')(ao)
+  )
+  Handlers.append("_default", function() return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
-  
+
   local status, result = pcall(Handlers.evaluate, msg, ao.env)
   if not status then
     table.insert(Errors, result)
     return {
-      Output = { 
-        data = { 
-          prompt = Prompt(), 
-          json = 'undefined', 
-          output = result 
+      Output = {
+        data = {
+          prompt = Prompt(),
+          json = 'undefined',
+          output = result
         }
-      }, 
-      Messages = {}, 
+      },
+      Messages = {},
       Spawns = {}
     }
   end
-  
-  return ao.result({ })
+
+  return ao.result({})
 end
 
 return process
