@@ -5,7 +5,7 @@ import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
 
-test('print hello world', async () => {
+test('create sqlite db, run insert & select', async () => {
   const handle = await AoLoader(wasm)
   const env = {
     Process: {
