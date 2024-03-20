@@ -16,7 +16,7 @@ test('print hello world', async () => {
       ]
     }
   }
-  const msg = {
+  const msg = (cmd) => ({
     Target: 'AOS',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
@@ -25,10 +25,12 @@ test('print hello world', async () => {
     Tags: [
       { name: 'Action', value: 'Run' }
     ],
-    Data: `
+    Data: cmd
+  })
+  const run1 = `
 sqlite3 = require("lsqlite3")
 
-local db = sqlite3.open_memory()
+db = sqlite3.open_memory()
 
 db:exec "CREATE TABLE test (col1, col2)"
 db:exec "INSERT INTO test VALUES (1, 2)"
@@ -37,6 +39,9 @@ db:exec "INSERT INTO test VALUES (3, 6)"
 db:exec "INSERT INTO test VALUES (4, 8)"
 db:exec "INSERT INTO test VALUES (5, 10)"
 
+return "ok"
+`
+  const run2 = `
 db:create_function("my_sum", 2, function(ctx, a, b)
   ctx:result_number( a + b )
 end)
@@ -49,9 +54,13 @@ end
 
 return s
 `
-  }
-  const result = await handle(null, msg, env)
-  console.log(result.Output?.data.output)
-  assert.equal(result.Output?.data.output, "1 + 2 = 3.0\n2 + 4 = 6.0\n3 + 6 = 9.0\n4 + 8 = 12.0\n5 + 10 = 15.0\n")
+
+  const result1 = await handle(null, msg(run1), env)
+  console.log(result1.Output?.data.output)
+  assert.equal(result1.Output?.data.output, "ok")
+
+  const result2 = await handle(result1.Memory, msg(run2), env)
+  console.log(result2.Output?.data.output)
+  assert.equal(result2.Output?.data.output, "1 + 2 = 3.0\n2 + 4 = 6.0\n3 + 6 = 9.0\n4 + 8 = 12.0\n5 + 10 = 15.0\n")
   assert.ok(true)
 })
