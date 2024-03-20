@@ -62,18 +62,18 @@ module.exports = async function (binary, limit) {
    * This is how we track the amount of ops this WASM module has used,
    * and also how we refill the gas on each invocation of the WASM.
    */
-  instance.gas = {
-    limit: limit || DEFAULT_GAS_LIMIT,
-    used: 0,
-    use: (amount) => {
-      instance.gas.used += amount;
-    },
-    refill: (amount) => {
-      if (!amount) instance.gas.used = 0;
-      else instance.gas.used = Math.max(instance.gas.used - amount, 0);
-    },
-    isEmpty: () => instance.gas.used > instance.gas.limit,
-  };
+  // instance.gas = {
+  //   limit: limit || DEFAULT_GAS_LIMIT,
+  //   used: 0,
+  //   use: (amount) => {
+  //     instance.gas.used += amount;
+  //   },
+  //   refill: (amount) => {
+  //     if (!amount) instance.gas.used = 0;
+  //     else instance.gas.used = Math.max(instance.gas.used - amount, 0);
+  //   },
+  //   isEmpty: () => instance.gas.used > instance.gas.limit,
+  // };
 
   /**
    * Since the module can be invoked multiple times, there isn't really
@@ -101,7 +101,7 @@ module.exports = async function (binary, limit) {
       // /**
       //  * Make sure to refill the gas tank for each invocation
       //  */
-      instance.gas.refill();
+      // instance.gas.refill();
       const { ok, response } = JSON.parse(
         doHandle(JSON.stringify(msg), JSON.stringify(env))
       );
@@ -113,7 +113,7 @@ module.exports = async function (binary, limit) {
         Output: response.Output,
         Messages: response.Messages,
         Spawns: response.Spawns,
-        GasUsed: instance.gas.used,
+        GasUsed: 0, // instance.gas.used,
       };
     } finally {
       buffer = null;
