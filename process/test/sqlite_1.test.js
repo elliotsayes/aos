@@ -42,7 +42,8 @@ db:exec[[
 ]]
 return "ok"
 `
-  const result1 = await handle(null, msg(run1), env)
+  const msg1 = msg(run1)
+  const result1 = await handle(null, msg1, env)
   console.log("result1:\n" + result1.Output?.data.output)
   assert.equal(result1.Output?.data.output, "ok")
 
@@ -55,7 +56,8 @@ end
 
 return s
 `
-  const result2 = await handle(result1.Memory, msg(run2), env)
+  const msg2 = msg(run2)
+  const result2 = await handle(result1.Memory, msg2, env)
   console.log("\nresult2:\n" + result2.Output?.data.output)
   assert.equal(result2.Output?.data.output, "1: Hello Lua\n2: Hello Sqlite3\n3: Hello ao!!!\n")
 })
