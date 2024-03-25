@@ -25,6 +25,7 @@ const msg = (cmd) => ({
 })
 
 const wasm = fs.readFileSync('./process.wasm')
+const wasm2 = fs.readFileSync('./process.wasm')
 
 test('create sqlite db, run insert & select', async () => {
   const handle = await AoLoader(wasm)
@@ -46,7 +47,8 @@ return "ok"
   const result1 = await handle(null, msg1, env)
   console.log("result1:\n" + result1.Output?.data.output)
   assert.equal(result1.Output?.data.output, "ok")
-
+  
+  const handle2 = await AoLoader(wasm2)
   const run2 = `
 local s = ""
 
@@ -57,7 +59,8 @@ end
 return s
 `
   const msg2 = msg(run2)
-  const result2 = await handle(result1.Memory, msg2, env)
+  // const result2 = await handle2(result1.Memory, msg2, env)
+  const result2 = await handle2(result1.Memory, msg2, env)
   console.log("\nresult2:\n" + result2.Output?.data.output)
   assert.equal(result2.Output?.data.output, "1: Hello Lua\n2: Hello Sqlite3\n3: Hello ao!!!\n")
 })
