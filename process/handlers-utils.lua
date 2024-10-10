@@ -1,13 +1,18 @@
 local _utils = { _version = "0.0.2" }
 
-local _ = require('.utils')
+local utils = require('.utils')
 local ao = require(".ao")
 
 function _utils.hasMatchingTag(name, value)
   assert(type(name) == 'string' and type(value) == 'string', 'invalid arguments: (name : string, value : string)')
 
   return function (msg) 
-    return msg.Tags[name] == value 
+    return utils.find(
+      function (tag)
+        return tag.name == name and tag.value == value
+      end,
+      msg.TagArray
+    ) ~= nil
   end
 end
 
