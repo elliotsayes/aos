@@ -16,6 +16,16 @@ module.exports = function weaveDrive(mod, FS) {
       FS.streams[fd].node.cache = new Uint8Array(0)
     },
 
+    getStreamByFd(fd) {
+      for (var i = 0; i < FS.streams.length; i++) {
+        if (FS.streams[i]?.fd === fd) {
+          return FS.streams[i]
+        }
+      }
+      console.log("WeaveDrive: Could not find stream by fd: ", fd)
+      return undefined;
+    },
+
     async create(id) {
       var properties = { isDevice: false, contents: null }
 
@@ -101,12 +111,7 @@ module.exports = function weaveDrive(mod, FS) {
       if (pathCategory === 'tx') {
         FS.createPath('/', 'tx', true, false);
         if (FS.analyzePath(filename).exists) {
-          for (var i = 0; i < FS.streams.length; i++) {
-            if (FS.streams[i].node.name === id) {
-              return FS.streams[i].fd;
-            }
-          }
-          return 0;
+          return this.getStreamByFd(id)?.fd ?? 0;
         } else {
           const stream = await this.createTxHeader(id);
           return stream.fd;
@@ -116,12 +121,7 @@ module.exports = function weaveDrive(mod, FS) {
       if (pathCategory === 'block') {
         FS.createPath('/', 'block', true, false);
         if (FS.analyzePath(filename).exists) {
-          for (var i = 0; i < FS.streams.length; i++) {
-            if (FS.streams[i].node.name === id) {
-              return FS.streams[i].fd;
-            }
-          }
-          return 0;
+          return this.getStreamByFd(id)?.fd ?? 0;
         } else {
           const stream = await this.createBlockHeader(id);
           return stream.fd;
@@ -130,14 +130,7 @@ module.exports = function weaveDrive(mod, FS) {
 
       if (pathCategory === 'data') {
         if (FS.analyzePath(filename).exists) {
-          for (var i = 0; i < FS.streams.length; i++) {
-            if (FS.streams[i].node.name === id) {
-              //console.log("JS: Found file: ", filename, " fd: ", FS.streams[i].fd);
-              return FS.streams[i].fd;
-            }
-          }
-          console.log("JS: File not found: ", filename);
-          return 0;
+          return this.getStreamByFd(id)?.fd ?? 0;
         }
         else {
           //console.log("JS: Open => Creating file: ", id);
@@ -157,17 +150,11 @@ module.exports = function weaveDrive(mod, FS) {
     },
 
     async read(fd, raw_dst_ptr, raw_length) {
-
       // Note: The length and dst_ptr are 53 bit integers in JS, so this _should_ be ok into a large memspace.
       var to_read = Number(raw_length)
       var dst_ptr = Number(raw_dst_ptr)
 
-      var stream = 0;
-      for (var i = 0; i < FS.streams.length; i++) {
-        if (FS.streams[i].fd === fd) {
-          stream = FS.streams[i]
-        }
-      }
+      var stream = this.getStreamByFd(fd) ?? 0;
       // read block headers
       if (stream.path.includes('/block')) {
         mod.HEAP8.set(stream.node.contents.subarray(0, to_read), dst_ptr);
@@ -269,12 +256,7 @@ module.exports = function weaveDrive(mod, FS) {
       return bytes_read
     },
     close(fd) {
-      var stream = 0;
-      for (var i = 0; i < FS.streams.length; i++) {
-        if (FS.streams[i].fd === fd) {
-          stream = FS.streams[i]
-        }
-      }
+      var stream = this.getStreamByFd(fd) ?? 0;
       FS.close(stream)
     },
 
